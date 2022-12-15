@@ -89,7 +89,16 @@ int main() {
     // char buffer[BUFFER_SIZE] = {'\0'};
     // char message[] = "Hello, from the Client\n";
     // int messageLen = strlen(message) + 1;
+    /*
+    if (setsockopt(clientSocket, IPPROTO_TCP, TCP_CONGESTION, "cubic", 5) < 0) {
+            printf("set socket error from client\n");
+        }
+    if (setsockopt(clientSocket, IPPROTO_TCP, TCP_CONGESTION, "reno", 4) < 0) {
+            printf("set socket error from client\n");
+        }
     
+    */
+
     int bytesSent = send(sock, string1, length1, 0);
 
     if (bytesSent == -1) {

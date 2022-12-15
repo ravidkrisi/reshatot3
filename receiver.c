@@ -103,6 +103,12 @@ int main() {
         printf("Received: %s", buffer);
 
         // Reply to client
+        
+        /*
+        char authentication[]= "110100000001100111100110";
+        int authlen = strlen(authentication);
+        */
+
         char *message = "Welcome to our TCP-server\n";
         int messageLen = strlen(message) + 1;
 
