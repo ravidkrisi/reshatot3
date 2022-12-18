@@ -11,7 +11,7 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h>
-#include <sys/tcp>
+#include <netinet/tcp.h>
 
 #define SERVER_PORT 5060
 #define SERVER_IP_ADDRESS "127.0.0.1"
@@ -99,11 +99,11 @@ int main() {
         }
     
     */
-     if (setsockopt(connectResult, IPPROTO_TCP, TCP_CONGESTION, "cubic", 5) < 0)
-     
+     if (setsockopt(sock, IPPROTO_TCP, TCP_CONGESTION, "cubic", 5) < 0)
         {
             printf("set socket error from client\n");
         }
+
     int bytesSent = send(sock, string1, length1, 0);
 
     if (bytesSent == -1) {
@@ -124,8 +124,28 @@ int main() {
     } else if (bytesReceived == 0) {
         printf("peer has closed the TCP connection prior to recv().\n");
     } else {
-        printf("received %d bytes from server: %s\n", bytesReceived, bufferReply);
+        printf("authentication: %s", bufferReply);
     }
+
+    if (setsockopt(sock, IPPROTO_TCP, TCP_CONGESTION, "reno", 4) < 0)
+        {
+            printf("set socket error from client\n");
+        }
+
+
+    bytesSent = send(sock, string2, length2, 0);
+
+    if (bytesSent == -1) {
+        printf("send() failed with error code : %d", errno);
+    } else if (bytesSent == 0) {
+        printf("peer has closed the TCP connection prior to send().\n");
+    } else if (bytesSent < length2) {
+        printf("sent only %d bytes from the required %d.\n", length2, bytesSent);
+    } else {
+        printf("message was successfully sent.\n");
+    }
+
+
     
     close(sock);
     return 0;

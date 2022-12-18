@@ -25,7 +25,7 @@ int main() {
     int listeningSocket = -1;
     listeningSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP); // 0 means default protocol for stream sockets (Equivalently, IPPROTO_TCP)
     if (listeningSocket == -1) {
-        printf("Could not create listening socket : %d", errno);
+        printf("Could not create listening socket : %d\n", errno);
         return 1;
     }
 
@@ -35,7 +35,7 @@ int main() {
     int enableReuse = 1;
     int ret = setsockopt(listeningSocket, SOL_SOCKET, SO_REUSEADDR, &enableReuse, sizeof(int));
     if (ret < 0) {
-        printf("setsockopt() failed with error code : %d", errno);
+        printf("setsockopt() failed with error code : %d\n", errno);
         return 1;
     }
 
@@ -52,7 +52,7 @@ int main() {
     // Bind the socket to the port with any IP at this port
     int bindResult = bind(listeningSocket, (struct sockaddr *)&serverAddress, sizeof(serverAddress));
     if (bindResult == -1) {
-        printf("Bind failed with error code : %d", errno);
+        printf("Bind failed with error code : %d\n", errno);
         // close the socket
         close(listeningSocket);
         return -1;
@@ -108,7 +108,8 @@ int main() {
         gettimeofday(&stop, NULL);
 
         
-        printf("took %lu us\n", (stop.tv_sec - start.tv_sec) * 10000 + stop.tv_usec - start.tv_usec);         printf("Received: %s", buffer);
+        printf("took %lu us\n", (stop.tv_sec - start.tv_sec) * 10000 + stop.tv_usec - start.tv_usec);
+        printf("Received: %s", buffer);
 
         // Reply to client
         
@@ -133,6 +134,23 @@ int main() {
         } else {
             printf("message was successfully sent.\n");
         }
+
+        gettimeofday(&start, NULL);
+
+        bytesReceived = recv(clientSocket, buffer, BUFFER_SIZE, 0);
+        if (bytesReceived == -1) {
+            printf("recv failed with error code : %d\n", errno);
+            // close the sockets
+            close(listeningSocket);
+            close(clientSocket);
+            return -1;
+        }
+
+        gettimeofday(&stop, NULL);
+
+        
+        printf("took %lu us\n", (stop.tv_sec - start.tv_sec) * 10000 + stop.tv_usec - start.tv_usec);
+        printf("Received: %s", buffer);
     }
 
     close(listeningSocket);
