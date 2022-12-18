@@ -11,6 +11,7 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <sys/tcp>
 
 #define SERVER_PORT 5060
 #define SERVER_IP_ADDRESS "127.0.0.1"
@@ -86,19 +87,23 @@ int main() {
     }
     string1[i]='\0';
     string2[j]='\0';
-    // char buffer[BUFFER_SIZE] = {'\0'};
-    // char message[] = "Hello, from the Client\n";
-    // int messageLen = strlen(message) + 1;
+    
     /*
-    if (setsockopt(clientSocket, IPPROTO_TCP, TCP_CONGESTION, "cubic", 5) < 0) {
+    if (setsockopt(clientSocket, IPPROTO_TCP, TCP_CONGESTION, "cubic", 5) < 0)
+        {
             printf("set socket error from client\n");
         }
-    if (setsockopt(clientSocket, IPPROTO_TCP, TCP_CONGESTION, "reno", 4) < 0) {
+    if (setsockopt(clientSocket, IPPROTO_TCP, TCP_CONGESTION, "reno", 4) < 0)
+        {
             printf("set socket error from client\n");
         }
     
     */
-
+     if (setsockopt(connectResult, IPPROTO_TCP, TCP_CONGESTION, "cubic", 5) < 0)
+     
+        {
+            printf("set socket error from client\n");
+        }
     int bytesSent = send(sock, string1, length1, 0);
 
     if (bytesSent == -1) {

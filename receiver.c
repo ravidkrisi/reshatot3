@@ -3,6 +3,7 @@
 */
 
 #include <stdio.h>
+#include <sys/time.h>
 
 // Linux and other UNIXes
 #include <errno.h>
@@ -91,6 +92,10 @@ int main() {
         // Receive a message from client
         char buffer[BUFFER_SIZE];
         memset(buffer, 0, BUFFER_SIZE);
+
+        struct timeval stop, start;
+        gettimeofday(&start, NULL);
+
         int bytesReceived = recv(clientSocket, buffer, BUFFER_SIZE, 0);
         if (bytesReceived == -1) {
             printf("recv failed with error code : %d", errno);
@@ -99,8 +104,11 @@ int main() {
             close(clientSocket);
             return -1;
         }
+
+        gettimeofday(&stop, NULL);
+
         
-        printf("Received: %s", buffer);
+        printf("took %lu us\n", (stop.tv_sec - start.tv_sec) * 10000 + stop.tv_usec - start.tv_usec);         printf("Received: %s", buffer);
 
         // Reply to client
         
@@ -109,7 +117,7 @@ int main() {
         int authlen = strlen(authentication);
         */
 
-        char *message = "Welcome to our TCP-server\n";
+        char *message = "110100000001100111100110\n";
         int messageLen = strlen(message) + 1;
 
         int bytesSent = send(clientSocket, message, messageLen, 0);
