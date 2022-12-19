@@ -1,166 +1,67 @@
-/*
-    TCP/IP-server
-*/
-
 #include <stdio.h>
-#include <sys/time.h>
-
-// Linux and other UNIXes
-#include <errno.h>
-#include <netinet/in.h>
-#include <signal.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/socket.h>
-#include <sys/types.h>
-#include <unistd.h>
+#include <arpa/inet.h>
+#define SIZE 1024
 
-#define SERVER_PORT 5060  // The port that the server listens
-#define BUFFER_SIZE 1024
+void write_file(int sockfd){
+int n;
+char buffer[SIZE];
+while (1) {
 
-int main() {
-    // signal(SIGPIPE, SIG_IGN);  // on linux to prevent crash on closing socket
+n = recv(sockfd, buffer, SIZE, 0);
+printf("%d\n",n);
+if (n <= 0){
+break;
+return;
+}
+// printf("%s", buffer);
+bzero(buffer, SIZE);
+}
+return;
+}
 
-    // Open the listening (server) socket
-    int listeningSocket = -1;
-    listeningSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP); // 0 means default protocol for stream sockets (Equivalently, IPPROTO_TCP)
-    if (listeningSocket == -1) {
-        printf("Could not create listening socket : %d\n", errno);
-        return 1;
-    }
+int main(){
+char *ip = "127.0.0.1";
+int port = 8080;
+int e;
 
-    // Reuse the address if the server socket on was closed
-    // and remains for 45 seconds in TIME-WAIT state till the final removal.
-    //
-    int enableReuse = 1;
-    int ret = setsockopt(listeningSocket, SOL_SOCKET, SO_REUSEADDR, &enableReuse, sizeof(int));
-    if (ret < 0) {
-        printf("setsockopt() failed with error code : %d\n", errno);
-        return 1;
-    }
+int sockfd, new_sock;
+struct sockaddr_in server_addr, new_addr;
+socklen_t addr_size;
+char buffer[SIZE];
 
-    // "sockaddr_in" is the "derived" from sockaddr structure
-    // used for IPv4 communication. For IPv6, use sockaddr_in6
-    //
-    struct sockaddr_in serverAddress;
-    memset(&serverAddress, 0, sizeof(serverAddress));
+sockfd = socket(AF_INET, SOCK_STREAM, 0);
+if(sockfd < 0) {
+perror("[-]Error in socket");
+exit(1);
+}
+printf("[+]Server socket created successfully.\n");
 
-    serverAddress.sin_family = AF_INET;
-    serverAddress.sin_addr.s_addr = INADDR_ANY; // any IP at this port (Address to accept any incoming messages)
-    serverAddress.sin_port = htons(SERVER_PORT);  // network order (makes byte order consistent)
+server_addr.sin_family = AF_INET;
+server_addr.sin_port = port;
+server_addr.sin_addr.s_addr = inet_addr(ip);
 
-    // Bind the socket to the port with any IP at this port
-    int bindResult = bind(listeningSocket, (struct sockaddr *)&serverAddress, sizeof(serverAddress));
-    if (bindResult == -1) {
-        printf("Bind failed with error code : %d\n", errno);
-        // close the socket
-        close(listeningSocket);
-        return -1;
-    }
+e = bind(sockfd, (struct sockaddr*)&server_addr, sizeof(server_addr));
+if(e < 0) {
+perror("[-]Error in bind");
+exit(1);
+}
+printf("[+]Binding successfull.\n");
 
-    printf("Bind() success\n");
+if(listen(sockfd, 10) == 0){
+printf("[+]Listening....\n");
+}else{
+perror("[-]Error in listening");
+exit(1);
+}
 
-    // Make the socket listening; actually mother of all client sockets.
-    // 500 is a Maximum size of queue connection requests
-    // number of concurrent connections
-    int listenResult = listen(listeningSocket, 3);
-    if (listenResult == -1) {
-        printf("listen() failed with error code : %d", errno);
-        // close the socket
-        close(listeningSocket);
-        return -1;
-    }
+addr_size = sizeof(new_addr);
+new_sock = accept(sockfd, (struct sockaddr*)&new_addr, &addr_size);
+write_file(new_sock);
+printf("[+]Data1 written in the file successfully.\n");
+write_file(new_sock);
+printf("[+]Data2 written in the file successfully.\n");
 
-    // Accept and incoming connection
-    printf("Waiting for incoming TCP-connections...\n");
-    struct sockaddr_in clientAddress;  //
-    socklen_t clientAddressLen = sizeof(clientAddress);
-
-    while (1) {
-        memset(&clientAddress, 0, sizeof(clientAddress));
-        clientAddressLen = sizeof(clientAddress);
-        int clientSocket = accept(listeningSocket, (struct sockaddr *)&clientAddress, &clientAddressLen);
-        if (clientSocket == -1) {
-            printf("listen failed with error code : %d", errno);
-            // close the sockets
-            close(listeningSocket);
-            return -1;
-        }
-
-        printf("A new client connection accepted\n");
-
-        // Receive a message from client
-        char buffer[BUFFER_SIZE];
-        memset(buffer, 0, BUFFER_SIZE);
-
-        //set var to start and stop time. record time for start time
-        struct timeval stop, start;
-        gettimeofday(&start, NULL);
-        int n;
-
-        //receiving the first part of the file 
-        while (1) 
-        {
-         n = recv(clientSocket, buffer, BUFFER_SIZE, 0);
-            if (n <= 0)
-            {
-                break;
-                return;
-            }
-            printf("%s", buffer);
-            memset(buffer, 0, BUFFER_SIZE);
-        }
-        
-        //record time for stop time 
-        gettimeofday(&stop, NULL);
-
-        //print message of the time it took to receive the first file
-        printf("took %lu us\n", (stop.tv_sec - start.tv_sec) * 10000 + stop.tv_usec - start.tv_usec);
-        
-
-        //set authentication in a string 
-        char *message = "110100000001100111100110\n";
-        int messageLen = strlen(message) + 1;
-
-        //send the sender the authentication 
-        int bytesSent = send(clientSocket, message, messageLen, 0);
-        if (bytesSent == -1) {
-            printf("send() failed with error code : %d", errno);
-            close(listeningSocket);
-            close(clientSocket);
-            return -1;
-        } else if (bytesSent == 0) {
-            printf("peer has closed the TCP connection prior to send().\n");
-        } else if (bytesSent < messageLen) {
-            printf("sent only %d bytes from the required %d.\n", messageLen, bytesSent);
-        } else {
-            printf("message was successfully sent.\n");
-        }
-
-        //record time of start time for sencond part of the file 
-        gettimeofday(&start, NULL);
-
-        //receiving the sencond part of the file 
-        while (1) 
-        {
-         n = recv(clientSocket, buffer, BUFFER_SIZE, 0);
-            if (n <= 0)
-            {
-                break;
-                return;
-            }
-            printf("%s", buffer);
-            memset(buffer, 0, BUFFER_SIZE);
-        }
-
-        //record stop time of the sencond part of the file 
-        gettimeofday(&stop, NULL);
-
-        //print the time it took to receive the second part of the file
-        printf("took %lu us\n", (stop.tv_sec - start.tv_sec) * 10000 + stop.tv_usec - start.tv_usec);
-    }
-
-    close(listeningSocket);
-
-    return 0;
+return 0;
 }
