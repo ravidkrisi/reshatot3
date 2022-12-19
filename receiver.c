@@ -93,34 +93,36 @@ int main() {
         char buffer[BUFFER_SIZE];
         memset(buffer, 0, BUFFER_SIZE);
 
+        //set var to start and stop time. record time for start time
         struct timeval stop, start;
         gettimeofday(&start, NULL);
+        int n;
 
-        int bytesReceived = recv(clientSocket, buffer, BUFFER_SIZE, 0);
-        if (bytesReceived == -1) {
-            printf("recv failed with error code : %d", errno);
-            // close the sockets
-            close(listeningSocket);
-            close(clientSocket);
-            return -1;
+        //receiving the first part of the file 
+        while (1) 
+        {
+         n = recv(clientSocket, buffer, BUFFER_SIZE, 0);
+            if (n <= 0)
+            {
+                break;
+                return;
+            }
+            printf("%s", buffer);
+            memset(buffer, 0, BUFFER_SIZE);
         }
-
+        
+        //record time for stop time 
         gettimeofday(&stop, NULL);
 
-        
+        //print message of the time it took to receive the first file
         printf("took %lu us\n", (stop.tv_sec - start.tv_sec) * 10000 + stop.tv_usec - start.tv_usec);
-        printf("Received: %s", buffer);
-
-        // Reply to client
         
-        /*
-        char authentication[]= "110100000001100111100110";
-        int authlen = strlen(authentication);
-        */
 
+        //set authentication in a string 
         char *message = "110100000001100111100110\n";
         int messageLen = strlen(message) + 1;
 
+        //send the sender the authentication 
         int bytesSent = send(clientSocket, message, messageLen, 0);
         if (bytesSent == -1) {
             printf("send() failed with error code : %d", errno);
@@ -135,22 +137,27 @@ int main() {
             printf("message was successfully sent.\n");
         }
 
+        //record time of start time for sencond part of the file 
         gettimeofday(&start, NULL);
 
-        bytesReceived = recv(clientSocket, buffer, BUFFER_SIZE, 0);
-        if (bytesReceived == -1) {
-            printf("recv failed with error code : %d\n", errno);
-            // close the sockets
-            close(listeningSocket);
-            close(clientSocket);
-            return -1;
+        //receiving the sencond part of the file 
+        while (1) 
+        {
+         n = recv(clientSocket, buffer, BUFFER_SIZE, 0);
+            if (n <= 0)
+            {
+                break;
+                return;
+            }
+            printf("%s", buffer);
+            memset(buffer, 0, BUFFER_SIZE);
         }
 
+        //record stop time of the sencond part of the file 
         gettimeofday(&stop, NULL);
 
-        
+        //print the time it took to receive the second part of the file
         printf("took %lu us\n", (stop.tv_sec - start.tv_sec) * 10000 + stop.tv_usec - start.tv_usec);
-        printf("Received: %s", buffer);
     }
 
     close(listeningSocket);

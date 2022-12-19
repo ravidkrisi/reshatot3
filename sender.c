@@ -18,6 +18,19 @@
 
 #define BUFFER_SIZE 1024
 
+void send_file(FILE *fp, int sockfd){
+    int n;
+    char data[BUFFER_SIZE] = {0};
+
+    while (fgets(data, BUFFER_SIZE, fp) != NULL){
+        if (send(sockfd, data, sizeof(data), 0) == -1){
+            perror("[-]Error in sending file.");
+            exit(1);
+        }
+        bzero(data, BUFFER_SIZE)
+    }
+}
+
 int main() {
     int sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 
@@ -52,14 +65,14 @@ int main() {
 
     printf("connected to server\n");
 
-    // Sends some data to server
+    // open the file and split the file for 2 equal strings
     FILE *file;
     file = fopen("ex3", "r");
     if(file == NULL)
     {
         printf("couldnt load the file");
     }
-
+     
     fseek(file,0,SEEK_END);
     int length = ftell(file);
     fseek(file,0,SEEK_SET);
@@ -69,7 +82,6 @@ int main() {
 
     char *string1 = malloc(sizeof(char)*(length1+1));
     char *string2 = malloc(sizeof(char)*(length2+1));
-
 
     char c;
     int i = 0;
@@ -87,36 +99,32 @@ int main() {
     }
     string1[i]='\0';
     string2[j]='\0';
-    
-    /*
-    if (setsockopt(clientSocket, IPPROTO_TCP, TCP_CONGESTION, "cubic", 5) < 0)
-        {
-            printf("set socket error from client\n");
-        }
-    if (setsockopt(clientSocket, IPPROTO_TCP, TCP_CONGESTION, "reno", 4) < 0)
-        {
-            printf("set socket error from client\n");
-        }
-    
-    */
-     if (setsockopt(sock, IPPROTO_TCP, TCP_CONGESTION, "cubic", 5) < 0)
-        {
-            printf("set socket error from client\n");
-        }
 
-    int bytesSent = send(sock, string1, length1, 0);
-
-    if (bytesSent == -1) {
-        printf("send() failed with error code : %d", errno);
-    } else if (bytesSent == 0) {
-        printf("peer has closed the TCP connection prior to send().\n");
-    } else if (bytesSent < length1) {
-        printf("sent only %d bytes from the required %d.\n", length1, bytesSent);
-    } else {
-        printf("message was successfully sent.\n");
+    //set the cc algorithm to CUBIC 
+    if (setsockopt(sock, IPPROTO_TCP, TCP_CONGESTION, "cubic", 5) < 0)
+    {
+      printf("set socket error from client\n");
     }
-    
-    // Receive data from server
+
+    //send the first part of the file to the receiver 
+    int max=BUFFER_SIZE;
+    int i=0;
+    char data[BUFFER_SIZE] = {0};
+    while(i<length1) 
+    {
+    if(i+BUFFER_SIZE>length1)
+    {
+        max=length1-BUFFER_SIZE;
+    }
+    substring(data, string1, i, max);
+    if (send(sock, data, sizeof(data), 0) == -1) {
+      perror("[-]Error in sending file.");
+      exit(1);
+    }
+    bzero(data, BUFFER_SIZE);
+    i=i+BUFFER_SIZE;
+    }
+    // Receive authentication from receiver
     char bufferReply[BUFFER_SIZE] = {'\0'};
     int bytesReceived = recv(sock, bufferReply, BUFFER_SIZE, 0);
     if (bytesReceived == -1) {
@@ -127,26 +135,31 @@ int main() {
         printf("authentication: %s", bufferReply);
     }
 
+    // set the cc algorithm to RENO 
     if (setsockopt(sock, IPPROTO_TCP, TCP_CONGESTION, "reno", 4) < 0)
         {
             printf("set socket error from client\n");
         }
 
-
-    bytesSent = send(sock, string2, length2, 0);
-
-    if (bytesSent == -1) {
-        printf("send() failed with error code : %d", errno);
-    } else if (bytesSent == 0) {
-        printf("peer has closed the TCP connection prior to send().\n");
-    } else if (bytesSent < length2) {
-        printf("sent only %d bytes from the required %d.\n", length2, bytesSent);
-    } else {
-        printf("message was successfully sent.\n");
+    // send second part of the file to the receiver 
+    int max=BUFFER_SIZE;
+    int i=0;
+    char data[BUFFER_SIZE] = {0};
+    while(i<length2) 
+    {
+    if(i+BUFFER_SIZE>length2)
+    {
+        max=length1-BUFFER_SIZE;
+    }
+    substring(data, string1, i, max);
+    if (send(sock, data, sizeof(data), 0) == -1) {
+      perror("[-]Error in sending file.");
+      exit(1);
+    }
+    bzero(data, BUFFER_SIZE);
+    i=i+BUFFER_SIZE;
     }
 
-
-    
     close(sock);
     return 0;
 }
