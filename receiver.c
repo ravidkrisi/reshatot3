@@ -4,18 +4,19 @@
 #include <arpa/inet.h>
 #define SIZE 1024
 
+//a func that gets a the clientsocket and prints the file it gets from the sender
 void write_file(int sockfd){
 int n;
 char buffer[SIZE];
 while (1) {
 
 n = recv(sockfd, buffer, SIZE, 0);
-printf("%d\n",n);
+// printf("%d\n",n);
 if (n <= 0){
 break;
 return;
 }
-// printf("%s", buffer);
+printf("%s", buffer);
 bzero(buffer, SIZE);
 }
 return;
@@ -58,8 +59,22 @@ exit(1);
 
 addr_size = sizeof(new_addr);
 new_sock = accept(sockfd, (struct sockaddr*)&new_addr, &addr_size);
+
+//gets the first part of the file 
 write_file(new_sock);
 printf("[+]Data1 written in the file successfully.\n");
+
+// set authentication in a string 
+// char *message = "110100000001100111100110\n";
+// int messageLen = strlen(message) + 1;
+
+// //send the authentication to the server
+// if (send(sockfd, message, sizeof(message), 0) == -1) {
+// perror("[-]Error in sending file.");
+// exit(1);
+// }
+
+//gets the second part of the file
 write_file(new_sock);
 printf("[+]Data2 written in the file successfully.\n");
 

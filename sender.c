@@ -5,10 +5,10 @@
 #include <arpa/inet.h>
 #define SIZE 1024
 
+//send fucntion gets file and send it to the reciever
 void send_file(FILE *fp, int sockfd){
 int n;
 char data[SIZE] = {0};
-
 while(fgets(data, SIZE, fp) != NULL) {
 if (send(sockfd, data, sizeof(data), 0) == -1) {
 perror("[-]Error in sending file.");
@@ -23,10 +23,9 @@ char *ip = "127.0.0.1";
 int port = 8080;
 int e;
 
+
 int sockfd;
 struct sockaddr_in server_addr;
-// FILE *fp;
-// char *filename = "ex3";
 
 sockfd = socket(AF_INET, SOCK_STREAM, 0);
 if(sockfd < 0) {
@@ -39,20 +38,8 @@ server_addr.sin_family = AF_INET;
 server_addr.sin_port = port;
 server_addr.sin_addr.s_addr = inet_addr(ip);
 
-e = connect(sockfd, (struct sockaddr*)&server_addr, sizeof(server_addr));
-if(e == -1) {
-perror("[-]Error in socket");
-exit(1);
-}
-printf("[+]Connected to Server.\n");
-
-// fp = fopen(filename, "r");
-// if (fp == NULL) {
-// perror("[-]Error in reading file.");
-// exit(1);
-// }
-
- FILE *file;
+//split the file into 2 equal files 
+    FILE *file;
     file = fopen("ex3", "r");
     if(file == NULL)
     {
@@ -86,12 +73,33 @@ printf("[+]Connected to Server.\n");
     }
    
    fseek(part1,0,SEEK_SET);
-   fseek(part2,0,SEEK_SET);
+   fseek(part1,0,SEEK_SET);
 
-char dat[SIZE]={0};
-send_file(part2, sockfd);
-printf("[+]File1 data sent successfully.\n");
+//create a connection with the receiver
+e = connect(sockfd, (struct sockaddr*)&server_addr, sizeof(server_addr));
+if(e == -1) {
+perror("[-]Error in socket");
+exit(1);
+}
+printf("[+]Connected to Server.\n");
+
+
+//send the first part of the file
 send_file(part1, sockfd);
+printf("[+]File1 data sent successfully.\n");
+
+// //receive authentication from the receiver
+// char buffer[SIZE]={'\0'};
+// int n=recv(sockfd, buffer, SIZE, 0);
+// if(n<=0)
+// {
+//     printf("[+]failed to get authentication");
+//     exit(1);
+// }
+// printf("%s", buffer);
+
+//send the second part of the file 
+send_file(part2, sockfd);
 printf("[+]File2 data sent successfully.\n");
 
 printf("[+]Closing the connection.\n");
