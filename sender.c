@@ -10,7 +10,8 @@ void send_file(FILE *fp, int sockfd){
 int n;
 char data[SIZE] = {0};
 while(fgets(data, SIZE, fp) != NULL) {
-if (send(sockfd, data, sizeof(data), 0) == -1) {
+if (send(sockfd, data, sizeof(data), 0) == -1) 
+{
 perror("[-]Error in sending file.");
 exit(1);
 }
@@ -73,7 +74,7 @@ server_addr.sin_addr.s_addr = inet_addr(ip);
     }
    
    fseek(part1,0,SEEK_SET);
-   fseek(part1,0,SEEK_SET);
+   fseek(part2,0,SEEK_SET);
 
 //create a connection with the receiver
 e = connect(sockfd, (struct sockaddr*)&server_addr, sizeof(server_addr));
@@ -97,6 +98,7 @@ printf("[+]File1 data sent successfully.\n");
 //     exit(1);
 // }
 // printf("%s", buffer);
+
 
 //send the second part of the file 
 send_file(part2, sockfd);

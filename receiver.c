@@ -64,6 +64,7 @@ new_sock = accept(sockfd, (struct sockaddr*)&new_addr, &addr_size);
 write_file(new_sock);
 printf("[+]Data1 written in the file successfully.\n");
 
+
 // set authentication in a string 
 // char *message = "110100000001100111100110\n";
 // int messageLen = strlen(message) + 1;
